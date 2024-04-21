@@ -38,3 +38,6 @@ some_package --version
 
 ## DB pointer
 export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:///$(pwd)/local/airflow.db
+
+
+
