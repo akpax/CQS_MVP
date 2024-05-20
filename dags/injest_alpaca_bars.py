@@ -2,6 +2,7 @@ import os
 import sys
 
 from airflow import DAG
+from airflow.models import Variable
 from airflow.operators.python import PythonOperator
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.email import EmailOperator
@@ -9,13 +10,22 @@ from google.cloud import bigquery
 
 import pendulum
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
+
+import logging
 
 # sys.path.insert(0, os.getenv("ROOT_DIR"))
 
 from util.core.alpaca.alpaca_actions import pull_bars
 
-schema = [
+EMAILS = ["austin.paxton007@gmail.com", "fallonjoey1@gmail.com"]
+
+ALPACA_HEADER = (
+    Variable.get("SECRET_ALPACA_API_KEY_ID"),
+    Variable.get("SECRET_ALPACA_API_SECRET_KEY"),
+)
+
+SCHEMA = [
     bigquery.SchemaField("symbol", "STRING", mode="REQUIRED"),
     bigquery.SchemaField("timestamp", "TIMESTAMP", mode="REQUIRED"),
     bigquery.SchemaField("open", "FLOAT", mode="REQUIRED"),
@@ -27,17 +37,24 @@ schema = [
     bigquery.SchemaField("vwap", "FLOAT", mode="REQUIRED"),
 ]
 
-table_id = "cqs-mvp.stocks.price-history"
+TABLE_ID = "cqs-mvp.stocks.price-history"
 
 
-def pull_bars_push_to_bq(ti):
-    bars_df = pull_bars(datetime(2024, 5, 15), datetime(2024, 5, 16))
-    client = bigquery.Client()
-    job_config = bigquery.LoadJobConfig(schema=schema)
-    job = client.load_table_from_dataframe(bars_df, table_id, job_config=job_config)
+def pull_bars_push_to_bq(**ctx):
+    yesterday = ctx["execution_date"] - timedelta(days=5)
+    logging.info(yesterday)
+    today = ctx["next_execution_date"] - timedelta(days=4)
+    logging.info(today)
+    bars_df = pull_bars(yesterday, today, ALPACA_HEADER)
+    if len(bars_df) == 0:
+        logging.error("NULL DATA")
+        1 / 0
+    logging.info(bars_df)
+    client = bigquery.Client(project="cqs-mvp")
+    job_config = bigquery.LoadJobConfig(schema=SCHEMA)
+    job = client.load_table_from_dataframe(bars_df, TABLE_ID, job_config=job_config)
     # waits for job to complete
     job.result()
-    pass
 
 
 """
@@ -66,20 +83,26 @@ try to hit first with random data set
 
 
 dag = DAG(
-    schedule="@daily",
+    schedule="5 7 * * 1-5",
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
     tags=["injest_data"],
     dag_id="injest_alpaca_bars",
 )
 
-first_task = EmptyOperator(task_id="empty", dag=dag)
+first_task = EmptyOperator(task_id="first_task", dag=dag)
 
-transform_task = PythonOperator(
-    task_id="pull_and_push", python_callable=pull_bars_push_to_bq, dag=dag
+pull_and_push_task = PythonOperator(
+    task_id="pull_and_push_task", python_callable=pull_bars_push_to_bq, dag=dag
 )
 
-send_status_task = EmailOperator(task_id="send_status")
+# email_task = EmailOperator(
+#     task_id="email_task",
+#     to=EMAILS,
+#     subject="[SUCCESS] DAILY ALPACA BARS LOADED INTO BQ",
+#     html_content=" ",
+#     dag=dag,
+# )
 
 
-first_task >> transform_task
+first_task >> pull_and_push_task  # >> email_task
