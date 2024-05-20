@@ -1,17 +1,14 @@
 from datetime import date, timedelta
 import os
 from tempfile import NamedTemporaryFile
-from dotenv import load_dotenv
+
 
 from alpaca.data import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
 
-load_dotenv()
 
-watchlist_path = os.getenv("WATCHLIST_PATH")
-print(watchlist_path)
-headers = (os.getenv("ALPACA_API_KEY_ID"), os.getenv("ALPACA_API_SECRET_KEY"))
+watchlist_path = "/Users/austinpaxton/Documents/dev/coastal_quant_strategies/CQS_MVP/stock_lists/watchlist/watchlist_.txt"
 
 
 def read_watchlist(path: str) -> list:
@@ -21,9 +18,9 @@ def read_watchlist(path: str) -> list:
     return [ticker[:-1] for ticker in watchlist]
 
 
-def pull_bars(start_date, end_date):
+def pull_bars(start_date, end_date, header):
     tickers = read_watchlist(watchlist_path)
-    stock_client = StockHistoricalDataClient(*headers)
+    stock_client = StockHistoricalDataClient(*header)
     request_params = StockBarsRequest(
         symbol_or_symbols=tickers,
         timeframe=TimeFrame.Day,
