@@ -14,7 +14,6 @@ from datetime import datetime, timedelta
 
 import logging
 
-# sys.path.insert(0, os.getenv("ROOT_DIR"))
 
 from util.core.alpaca.alpaca_actions import pull_bars
 
@@ -41,45 +40,20 @@ TABLE_ID = "cqs-mvp.stocks.price-history"
 
 
 def pull_bars_push_to_bq(**ctx):
-    yesterday = ctx["execution_date"] - timedelta(days=5)
+    yesterday = datetime.now() - timedelta(days=1)
     logging.info(yesterday)
-    today = ctx["next_execution_date"] - timedelta(days=4)
+    today = datetime.now() - timedelta(minutes=15)
     logging.info(today)
     bars_df = pull_bars(yesterday, today, ALPACA_HEADER)
     if len(bars_df) == 0:
         logging.error("NULL DATA")
-        1 / 0
+        # TODO raise airflow skip exception
     logging.info(bars_df)
     client = bigquery.Client(project="cqs-mvp")
     job_config = bigquery.LoadJobConfig(schema=SCHEMA)
     job = client.load_table_from_dataframe(bars_df, TABLE_ID, job_config=job_config)
     # waits for job to complete
     job.result()
-
-
-"""
-Need to unpack context (**ctx)
-Add retry to pull_bars, 
-need to add email on retry (default) args
-
-Operators: 
-dummy operator: flag, softball to scheduler
-python operator: contains pull bars function and biq query client (load_table_from_data_frame)
-- add additional column to data frame DATEGENERATED
- - make sure to not include indexes, in bq make so they have their own tables
-
-May need to add Google cloud credentials to airflow Connections in admin panel -> try without it first
-
-authentication issues w bq Client Class?
-try to hit first with random data set
--if i cant hit check out LoadJob class 
-"""
-
-# def transform(ti=None, **kwargs):
-#     temp_csv = ti.xcom_pull(task_ids="extract")
-#     df = pd.read_csv(temp_csv)
-#     print(df)
-#     os.remove(temp_csv)
 
 
 dag = DAG(

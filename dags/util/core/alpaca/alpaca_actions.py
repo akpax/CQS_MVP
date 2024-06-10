@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 import os
 from tempfile import NamedTemporaryFile
+import pandas as pd
 
 
 from alpaca.data import StockHistoricalDataClient
@@ -8,18 +9,18 @@ from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
 
 
-watchlist_path = "/Users/austinpaxton/Documents/dev/coastal_quant_strategies/CQS_MVP/stock_lists/watchlist/watchlist_.txt"
+ALAPCA_WATCHLIST_GCS_URI = (
+    "gs://watchlist_alpaca_supported/20240609/alpaca_supported_tickers.csv"
+)
 
 
 def read_watchlist(path: str) -> list:
-    with open(path, "r") as f:
-        watchlist = f.readlines()
-    # remove newline characters at end
-    return [ticker[:-1] for ticker in watchlist]
+    tickers_df = pd.read_csv(path, na_filter=False)
+    return tickers_df["Symbol"].to_list()
 
 
 def pull_bars(start_date, end_date, header):
-    tickers = read_watchlist(watchlist_path)
+    tickers = read_watchlist(ALAPCA_WATCHLIST_GCS_URI)
     stock_client = StockHistoricalDataClient(*header)
     request_params = StockBarsRequest(
         symbol_or_symbols=tickers,
