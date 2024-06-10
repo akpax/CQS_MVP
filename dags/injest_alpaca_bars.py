@@ -3,19 +3,21 @@ import sys
 
 from airflow import DAG
 from airflow.models import Variable
-from airflow.operators.python import PythonOperator
+from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.email import EmailOperator
+
 from google.cloud import bigquery
 
 import pendulum
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 import logging
 
 
 from util.core.alpaca.alpaca_actions import pull_bars
+from util.core.calendar.calendar_util import check_if_exchange_open
 
 EMAILS = ["austin.paxton007@gmail.com", "fallonjoey1@gmail.com"]
 
@@ -56,6 +58,10 @@ def pull_bars_push_to_bq(**ctx):
     job.result()
 
 
+def is_exchange_open_today():
+    return check_if_exchange_open("NYSE", date.today())
+
+
 dag = DAG(
     schedule="5 7 * * 1-5",
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
@@ -65,6 +71,10 @@ dag = DAG(
 )
 
 first_task = EmptyOperator(task_id="first_task", dag=dag)
+
+check_market_open_task = ShortCircuitOperator(
+    task_id="check_market_open_task", python_callable=is_exchange_open_today
+)
 
 pull_and_push_task = PythonOperator(
     task_id="pull_and_push_task", python_callable=pull_bars_push_to_bq, dag=dag
@@ -76,7 +86,7 @@ pull_and_push_task = PythonOperator(
 #     subject="[SUCCESS] DAILY ALPACA BARS LOADED INTO BQ",
 #     html_content=" ",
 #     dag=dag,
-# )
+# )``
 
 
-first_task >> pull_and_push_task  # >> email_task
+first_task >> check_market_open_task >> pull_and_push_task  # >> email_task
