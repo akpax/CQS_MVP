@@ -12,9 +12,9 @@ poetry shell
 
 poetry install
 
-export AIRFLOW_HOME=`(pwd)`
+export AIRFLOW_HOME=`pwd`
 
-export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=`(pwd)`/local/airflow.db
+export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=`pwd`/local/airflow.db
 
 airflow standalone
 

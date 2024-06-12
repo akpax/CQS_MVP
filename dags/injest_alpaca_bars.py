@@ -47,7 +47,7 @@ def pull_bars_push_to_bq(**ctx):
     today = datetime.now() - timedelta(minutes=15)
     logging.info(today)
     bars_df = pull_bars(yesterday, today, ALPACA_HEADER)
-    if len(bars_df) == 0:
+    if not bars_df:
         logging.error("NULL DATA")
         # TODO raise airflow skip exception
     logging.info(bars_df)
