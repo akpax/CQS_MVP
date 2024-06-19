@@ -14,6 +14,8 @@ from datetime import date
 
 import pandas as pd
 
+EXCHANGE_CSVS_DIR_PATH = "/Users/austinpaxton/Documents/dev/coastal_quant_strategies/CQS_MVP/stock_lists/exchanges"
+
 
 def get_paths_to_exchange_csvs(dir_path: str) -> list:
     """
@@ -28,7 +30,7 @@ def get_paths_to_exchange_csvs(dir_path: str) -> list:
 
 def get_watchlist_tickers(path_to_csv_dir: str) -> list:
     """
-    Converts a list of .csv files containing ticker symbols of unqique exchanges and converts to single watch list
+    Converts a list of .csv files containing ticker symbols of unique exchanges and converts to single watch list
 
     Input:
     *path_to_csv_dir: path to exchange csvs directory
@@ -42,22 +44,8 @@ def get_watchlist_tickers(path_to_csv_dir: str) -> list:
         # assures stock with ticker "NA" not converted to nan
         df = pd.read_csv(csv, keep_default_na=False, na_values=["_"])
         tickers.extend(df["Symbol"].to_list())
-    return list(set(tickers))
-
-
-def create_watchlist_text_file(tickers: list, out_path: str):
-    """
-    Converts list of tickers intov text file and converts ticker to Alpaca format
-
-    Input:
-    *tickers: list of tickers
-    *out: output path string
-    """
-    with open(out_path, "w") as f:
-        _ = [
-            f.write(convert_ticker_to_alpaca_format(symbol) + "\n")
-            for symbol in tickers
-        ]
+    tickers = list(set(tickers))
+    return pd.DataFrame(tickers, columns=["Symbol"])
 
 
 def convert_ticker_to_alpaca_format(ticker: str) -> str:
@@ -72,5 +60,11 @@ def convert_ticker_to_alpaca_format(ticker: str) -> str:
 
 
 if __name__ == "__main__":
-    tickers = get_watchlist_tickers(r"stock_lists/exchanges")
-    create_watchlist_text_file(tickers, out_path=getenv("WATCHLIST_PATH"))
+    tickers_df = get_watchlist_tickers(EXCHANGE_CSVS_DIR_PATH)
+    tickers_df["Symbol"] = tickers_df["Symbol"].apply(
+        lambda x: convert_ticker_to_alpaca_format(x)
+    )
+    tickers_df.to_csv(
+        "/Users/austinpaxton/Documents/dev/coastal_quant_strategies/CQS_MVP/stock_lists/watchlist/alpaca_supported_tickers.csv",
+        index=False,
+    )

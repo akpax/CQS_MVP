@@ -19,8 +19,9 @@ def read_watchlist(path: str) -> list:
     return tickers_df["Symbol"].to_list()
 
 
-def pull_bars(start_date, end_date, header):
-    tickers = read_watchlist(ALAPCA_WATCHLIST_GCS_URI)
+def pull_bars(start_date, end_date, header, tickers=None):
+    if not tickers:
+        tickers = read_watchlist(ALAPCA_WATCHLIST_GCS_URI)
     stock_client = StockHistoricalDataClient(*header)
     request_params = StockBarsRequest(
         symbol_or_symbols=tickers,
@@ -30,4 +31,6 @@ def pull_bars(start_date, end_date, header):
     )
     # get bars and convert to pandas_df
     bars_df = stock_client.get_stock_bars(request_params).df
-    return bars_df.reset_index()
+    if len(bars_df) > 0:
+        return bars_df.reset_index()
+    return None
