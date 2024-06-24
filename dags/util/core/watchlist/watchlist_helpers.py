@@ -1,36 +1,47 @@
 """
-ALPACA currently supports NYSE and NASDAQ stock exchanges. 
-These exchanges update which stocks they support and ALPACA may add other exchanges in future. Therefore, our watchlist must be periodically updated.
-These helper functions aim to speed up the watchlist creation process.
-The helper functions read these .csvs and create a text file to store our watchlist. 
+ALPACA currently supports NYSE and NASDAQ stock exchanges. These exchanges 
+update which stocks they support and ALPACA may add other exchanges in future. 
+Therefore, our watchlist must be periodically updated. These helper functions 
+aim to speed up the watchlist creation process. The helper functions read these
+.csvs and create a text file to store our watchlist. 
 
-.csvs sourced from: https://www.nasdaq.com/market-activity/stocks/screener 
+.csvs sourced from:
+https://www.nasdaq.com/market-activity/stocks/screener 
 
 """
 
-from os import listdir, getenv
+from os import listdir
 from os.path import isfile, join
-from datetime import date
-
 import pandas as pd
 
-EXCHANGE_CSVS_DIR_PATH = "/Users/austinpaxton/Documents/dev/coastal_quant_strategies/CQS_MVP/stock_lists/exchanges"
-
+EXCHANGE_CSVS_DIR_PATH = (
+    "/Users/austinpaxton/Documents/dev/coastal_quant_strategies/CQS_MVP/"
+    "stock_lists/exchanges"
+)
+OUTPUT_PATH = (
+    "/Users/austinpaxton/Documents/dev/coastal_quant_strategies/"
+               "CQS_MVP/stock_lists/watchlist/alpaca_supported_tickers.csv"
+               )
 
 def get_paths_to_exchange_csvs(dir_path: str) -> list:
     """
-    Get all file paths of files inside specified my path directory
+    Get all file paths of files inside specified my path directory.
     Inputs:
     *dir_path: path to directory that contains .csv from individual exchanges
 
     Output: list of file paths in dir_path directory
     """
-    return [join(dir_path, f) for f in listdir(dir_path) if isfile(join(dir_path, f))]
+    return [
+        join(dir_path, f) 
+        for f in listdir(dir_path)
+        if isfile(join(dir_path, f))
+        ]
 
 
 def get_watchlist_tickers(path_to_csv_dir: str) -> list:
     """
-    Converts a list of .csv files containing ticker symbols of unique exchanges and converts to single watch list
+    Converts a list of .csv files containing ticker symbols
+    of unique exchanges and converts to single watch list.
 
     Input:
     *path_to_csv_dir: path to exchange csvs directory
@@ -51,7 +62,8 @@ def get_watchlist_tickers(path_to_csv_dir: str) -> list:
 def convert_ticker_to_alpaca_format(ticker: str) -> str:
     """
     Converts "^" in symbol to "."
-    (Alpaca API expects "." for companies with multiple share classes and will throw an error
+    (Alpaca API expects "." for companies with multiple share classes and will 
+    throw an error)
     example for Berkshire Hathaway Class B: BRK^B -> BRK.B
     """
     mapping_table = str.maketrans({"^": ".", "/": "."})
@@ -64,7 +76,4 @@ if __name__ == "__main__":
     tickers_df["Symbol"] = tickers_df["Symbol"].apply(
         lambda x: convert_ticker_to_alpaca_format(x)
     )
-    tickers_df.to_csv(
-        "/Users/austinpaxton/Documents/dev/coastal_quant_strategies/CQS_MVP/stock_lists/watchlist/alpaca_supported_tickers.csv",
-        index=False,
-    )
+    tickers_df.to_csv(OUTPUT_PATH, index=False)
