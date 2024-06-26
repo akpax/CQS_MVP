@@ -1,5 +1,5 @@
 """
-This module contains the 'inject_alpaca_bars' dag. The first operator checks if
+This module contains the 'injest_alpaca_bars' dag. The first operator checks if
 the NYSE is open and short circuits if it is closed. If the stock exchange is
 open it proceeds with a python operator that pulls bars from the current day 
 and pushes them to bigquery.
