@@ -1,0 +1,13 @@
+# Note that only one of these targets is required
+
+cqs_mvp:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: cqs-mvp
+      dataset: stocks # You can also use "schema" here
+      threads: 4 # Must be a value of 1 or greater 
+      
+

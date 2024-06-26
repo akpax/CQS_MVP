@@ -1,0 +1,46 @@
+
+sources:
+  - name: stocks
+    description: various stock data from Alpaca and SEC
+    database: cqs-mvp
+    schema: stocks
+    tables:
+      - name: price-history
+        description: historical stock price data from NYSE stock exchange
+        columns:
+        - name: symbol
+          description: stock ticker
+          tests: 
+            - not_null
+        - name: timestamp
+          description: date of stock price
+          tests:
+            - not_null
+        - name: open
+          description: stock price at open
+          tests:
+            - not_null
+        - name: close
+          description: stock price at close
+          tests:
+            - not_null
+        - name: high
+          description: highest price of the day
+          tests:
+            - not_null
+        - name: low
+          description: lowest price of the day
+          tests:
+            - not_null
+        - name: volume
+          description: sum of shares traded throughout day
+          tests:
+            - not_null
+        - name: trade_count
+          description: count of number of trades
+          tests:
+            - not_null
+        - name: vwap
+          description: volume weighted average (price * volume)/volume_total
+          tests:
+            - not_null
