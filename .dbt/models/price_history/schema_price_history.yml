@@ -1,0 +1,35 @@
+
+
+models:
+  - name: stg_price_history_no_duplicates
+    description: composite key is symbol,timestamp
+
+    columns:
+    - name: symbol
+      description: stock ticker
+
+    - name: timestamp
+      description: date of stock price
+
+    - name: open
+      description: stock price at open
+
+    - name: close
+      description: stock price at close
+
+    - name: high
+      description: highest price of the day
+
+    - name: low
+      description: lowest price of the day
+
+    - name: volume
+      description: sum of shares traded throughout day
+      
+    - name: trade_count
+      description: count of number of trades
+
+    - name: vwap
+      description: volume weighted average (price * volume)/volume_total
+
+
