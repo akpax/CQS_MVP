@@ -1,0 +1,29 @@
+name: deploy
+
+on: 
+  pull_request:
+    types:
+        - closed
+    branches:
+        - main
+
+jobs:
+    deploy-if-merged:
+
+        if: github.event.pull_request.merged == true
+
+        runs-on: macos-latest
+        steps:
+        - uses: actions/checkout@v3  # Download entire codebase
+
+        - name: GCP Authentication
+          uses: google-github-actions/auth@v1
+          with:
+            project_id: cqs-mvp
+            workload_identity_provider: projects/561271289194/locations/global/workloadIdentityPools/github
+  
+        - name: Codebase Deployment
+          uses: google-github-actions/upload-cloud-storage@v1
+          with:
+            path: '.'  # Upload everything from the root directory
+            destination: 'gs://us-central1-cqs-airflow-473e8a4a-bucket/quarantine/'
