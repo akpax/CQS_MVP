@@ -41,6 +41,7 @@ def pull_bars(start_date, end_date, header, tickers=None):
         timeframe=TimeFrame.Day,
         start=start_date,
         end=end_date,
+        adjustment='split'
     )
     # do up to 5 retries if DataFrame returned is empty
     for i in range(1,6):
